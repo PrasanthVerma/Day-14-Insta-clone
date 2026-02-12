@@ -1,5 +1,5 @@
 const userModel = require("../models/user.model")
-const crypto = require("crypto")
+const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 
 
@@ -17,7 +17,7 @@ async function registerController(req, res) {
             message: "User already Exists" + (isUserAlreadyExist.email == email ? " Email Already Exists" : " username already exists")
         })
     }
-    const hash = crypto.createHash("sha256").update(password).digest("hex")
+    const hash = await bcrypt.hash(password, 10 )
     const user = await userModel.create({
         username,
         email,
@@ -28,7 +28,8 @@ async function registerController(req, res) {
     const token = jwt.sign({
         id: user._id
     }, process.env.JWT_SECRET, { expiresIn: "1hr" })
-    res.cookie("token", token, { httpOnly: true })
+    // set cookie with sameSite and secure settings for dev/prod
+    res.cookie("token", token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' })
 
     res.status(200).json({
         message: "User created successfully",
@@ -55,9 +56,9 @@ async function loginController(req, res) {
         })
     }
 
-    const hash = crypto.createHash("sha256").update(password).digest("hex")
+    
 
-    const isPswdValid = hash === user.password
+    const isPswdValid = await bcrypt.compare(password,user.password)
 
     if (!isPswdValid) {
         return res.status(401).json({
@@ -69,7 +70,7 @@ async function loginController(req, res) {
         id: user._id
     }, process.env.JWT_SECRET, { expiresIn: "1d" })
 
-    res.cookie("token", token, { httpOnly: true })
+    res.cookie("token", token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' })
 
     res.status(200).json({
         message: "user Logged in successfully",
