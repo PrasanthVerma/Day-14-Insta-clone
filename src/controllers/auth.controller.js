@@ -28,7 +28,7 @@ async function registerController(req, res) {
     const token = jwt.sign({
         id: user._id
     }, process.env.JWT_SECRET, { expiresIn: "1hr" })
-    // set cookie with sameSite and secure settings for dev/prod
+    
     res.cookie("token", token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' })
 
     res.status(200).json({
