@@ -12,23 +12,6 @@ async function createPostController(req, res) {
 
     console.log(req.body, req.file)
 
-    const token = req.cookies.token
-
-    if (!token) {
-        return res.status(401).json({
-            message: "Unauthorized access"
-        })
-    }
-    let decoded = null
-    try {
-        decoded = jwt.verify(token, process.env.JWT_SECRET)
-    }
-    catch (err) {
-        return res.status(401).json({
-            message: "unauthorized Access"
-        })
-    }
-
     if (!req.file) {
         return res.status(400).json({ message: "Image file is required" })
     }
@@ -44,7 +27,7 @@ async function createPostController(req, res) {
     const post = await postModel.create({
         caption: req.body.caption,
         imageURL,
-        user: decoded.id
+        user: req.user.id
     })
 
     res.status(200).json({
@@ -55,26 +38,9 @@ async function createPostController(req, res) {
 
 async function getPostController(req, res) {
 
-    const token = req.cookies.token
+    const userId = req.user.id
 
-    if (!token) {
-        return res.status(401).json({
-            message: "Unathorized Access"
-        })
-    }
-
-    let decoded
-    try {
-        decoded = jwt.verify(token.JWT_SECRET)
-    } catch (err) {
-        return res.status(401).json({
-            message: "Invalid Token"
-        })
-    }
-
-    const userId = decoded.id
-
-    const posts = await postModel.findById({ user: userId })
+    const posts = await postModel.find({ user: userId })
 
     return res.status(200).json({
         message: "Posts Fetched Successfully",
@@ -83,29 +49,11 @@ async function getPostController(req, res) {
 }
 
 async function getPostDetailsController(req, res) {
-    const token = req.cookies.token
 
-    if (!token) {
-        return res.status(401).json({
-            message: "Unauthorized Access"
-        })
-    }
-
-    let decoded
-
-    try {
-        decoded = jwt.verify(token, JWT_SECRET)
-    }
-    catch (err) {
-        return res.status(401).json({
-            message: "Invalid Token"
-        })
-    }
-
-    const userId = decoded.id
+    const userId = req.user.id
     const postId = req.params.postId
 
-    const post = await postModel.findById({ postId })
+    const post = await postModel.findById(postId)
 
     if (!post) {
         return res.status(404).json({
@@ -115,14 +63,14 @@ async function getPostDetailsController(req, res) {
 
     const isValidUser = post.user.toString() === userId
 
-    if(!isValidUser){
+    if (!isValidUser) {
         return res.status(401).json({
-            message:"Unauthorized Request"
+            message: "Unauthorized Request"
         })
     }
 
     return res.status(200).json({
-        message:"Post details fetched successfully",
+        message: "Post details fetched successfully",
         post
     })
 
