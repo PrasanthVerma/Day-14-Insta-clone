@@ -2,18 +2,17 @@ const mongoose = require("mongoose")
 
 
 const followSchema = new mongoose.Schema({
+    // store usernames instead of ObjectId references
     follower: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "userdatas",
-        required: [true, "Follower is required"],
-
+        type: String,
+        required: [true, "Follower username is required"],
     },
     followee: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "userdatas",
-        required: [true, "Followee is required"],
-
+        type: String,
+        required: [true, "Followee username is required"],
     }
+}, {
+    timestamps: true
 })
 
 const followModel = mongoose.model("follows", followSchema)
